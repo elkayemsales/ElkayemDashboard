@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elkayem Dashboard</title>
+  <link rel="icon" href="https://1drv.ms/i/c/4ab693cd2bf36664/IQTr7ZSuh7O8QLKuxXi2-O6sAYJZMA6tE-ZmCfHweVYiK98?width=136&height=58" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root{
+      --primary: #d97706;
+      --primary-light: #fbbf24;
+      --bg-light: #fdf6e3;
+      --text-light: #4b3f2f;
+      --sidebar-bg: #f4e3c3;
+      --sidebar-hover: #edd9b0;
+      --bg-dark: #111213;
+      --text-dark: #e6e6e6;
+      --sidebar-bg-dark: #1f1f1f;
+      --sidebar-hover-dark: #2a2a2a;
+      --sidebar-width: 220px;
+      --sidebar-collapsed-width: 60px;
+      --iframe-ref-w: 1280;   /* reference width for auto-fit */
+      --iframe-ref-h: 720;    /* reference height for default viewport */
+      --header-height: 64px;
+      --toast-duration: 2200;
+      --zoom-min: 40;   /* percent */
+      --zoom-max: 150;  /* percent */
+    }
+
+    /* Reset & base */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+      background:var(--bg-light);
+      color:var(--text-light);
+      display:flex;
+      min-height:100vh;
+      overflow:hidden;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    body.dark-mode{
+      background:var(--bg-dark);
+      color:var(--text-dark);
+    }
+
+    /* Professional Sidebar (unchanged look) */
+    nav.sidebar{
+      width:var(--sidebar-width);
+      background: linear-gradient(180deg, var(--sidebar-bg) 0%, rgba(255,255,255,0.04) 100%);
+      display:flex;
+      flex-direction:column;
+      padding:12px 10px 92px 12px;
+      gap:10px;
+      transition:width .28s ease, background .28s ease, left .28s ease;
+      z-index:1400;
+      box-shadow: 2px 0 14px rgba(0,0,0,0.06);
+      border-right: 1px solid rgba(0,0,0,0.03);
+    }
+    body.dark-mode nav.sidebar{ background: linear-gradient(180deg, var(--sidebar-bg-dark) 0%, rgba(255,255,255,0.02) 100%); box-shadow: 2px 0 18px rgba(0,0,0,0.35); border-right: 1px solid rgba(255,255,255,0.03); }
+    nav.sidebar.collapsed{ width:var(--sidebar-collapsed-width); align-items:center; padding-left:6px }
+
+    nav.sidebar a{
+      position:relative;
+      display:flex; align-items:center;
+      gap:12px;
+      padding:12px 12px;
+      color:var(--text-light);
+      text-decoration:none;
+      border-radius:10px;
+      font-weight:600;
+      transition:background .18s, color .18s, transform .12s;
+      cursor:pointer;
+      white-space:nowrap;
+      min-height:44px;
+    }
+    body.dark-mode nav.sidebar a{ color:var(--text-dark) }
+    nav.sidebar a i{ font-size:18px; width:24px; text-align:center; color:inherit; }
+    nav.sidebar a:hover{ transform:translateX(4px); background:var(--sidebar-hover); color:#000; }
+    body.dark-mode nav.sidebar a:hover{ background:var(--sidebar-hover-dark); color:#fff }
+
+    nav.sidebar a.active{ background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%); color:#fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.02); }
+    nav.sidebar a.active::before{ content:""; position:absolute; left:0; top:8px; bottom:8px; width:4px; background:var(--primary-light); border-radius:4px; }
+
+    nav.sidebar.collapsed a{ justify-content:center; gap:0; font-size:0 }
+    nav.sidebar.collapsed a span{ display:none; }
+    nav.sidebar.collapsed a[data-label]::after{ content: attr(data-label); position:absolute; left:100%; top:50%; transform:translateY(-50%) translateX(10px); background: rgba(0,0,0,0.78); color:#fff; padding:6px 8px; border-radius:6px; font-size:13px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .18s; z-index:1600; }
+    nav.sidebar.collapsed a:hover::after{ opacity:1; }
+
+    #sidebarToggle{ margin-top:auto; align-self:center; background:var(--primary); color:#fff; border:none; border-radius:50%; width:48px; height:48px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,0.12); transition:transform .18s; }
+    #sidebarToggle:hover{ transform:rotate(12deg) }
+
+    /* main area */
+    .main-content{ flex:1; display:flex; flex-direction:column; min-width:0; height:100vh }
+
+    /* header: sync text color with nav text for light/dark */
+    .page-header{
+      height:var(--header-height);
+      display:flex; align-items:center; justify-content:center;
+      padding:10px 20px; background:var(--header-bg-light); border-bottom:1px solid #e5e7eb;
+      position:relative; font-weight:700; font-size:18px; color:var(--text-light);
+      transition:background .25s, color .25s;
+      flex-wrap:wrap;
+    }
+    body.dark-mode .page-header{ background: transparent; color:var(--text-dark); border-color: rgba(255,255,255,0.04); }
+    .header-title{ display:flex; align-items:center; gap:12px; flex:1; text-align:left }
+
+    .actions{ position:absolute; right:14px; top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .actions button{ background:var(--primary); color:#fff; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600 }
+    .actions button:active{ transform:translateY(1px) }
+
+    .zoom-control{ display:flex; align-items:center; gap:8px; margin-right:6px; font-size:13px }
+    .zoom-control input[type="range"]{ width:120px }
+
+    /* iframe area */
+    .iframe-container{ flex:1; position:relative; overflow:hidden; background: #fff; -webkit-overflow-scrolling:touch }
+    body.dark-mode .iframe-container{ background:#0b0b0b }
+
+    .iframe-viewport{ width:100%; height:100%; overflow:auto; position:relative; display:flex; justify-content:center; align-items:flex-start; touch-action:pan-x pan-y }
+    /* iframe-shell is resizable (CSS 'resize' for desktop + JS handle for better control) */
+    .iframe-shell{
+      width:100%;
+      max-width: calc(var(--iframe-ref-w) * 1px);
+      min-width: 320px;
+      margin:12px;
+      transition: transform .12s ease;
+      transform-origin: top left;
+      position:relative;
+      background:transparent;
+      overflow:auto;
+      resize: both;
+    }
+    .iframe-shell iframe{ width:100%; height: calc(100vh - var(--header-height) - 36px); border-radius:8px; border:1px solid rgba(0,0,0,0.04); display:block }
+
+    /* resizer handle (visible, draggable) */
+    .resize-handle{
+      position:absolute; right:6px; bottom:6px; width:20px; height:20px;
+      background: repeating-linear-gradient(45deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 4px);
+      border-radius:3px; cursor:se-resize; z-index:1600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .resize-handle:active{ filter:brightness(.95) }
+
+    /* iframe controls (zoom buttons) */
+    .iframe-controls{ position:absolute; bottom:14px; right:14px; display:flex; gap:6px; z-index:1500 }
+    .iframe-controls button{ background:rgba(0,0,0,0.6); color:#fff; border:none; width:36px; height:36px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700 }
+    .iframe-controls button:hover{ background:rgba(0,0,0,0.8) }
+
+    /* loading */
+    .loading-spinner{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:var(--primary); font-weight:700; display:none; z-index:1400 }
+    .loading-spinner.active{ display:block }
+
+    /* toast */
+    .toast{ position:fixed; right:18px; bottom:18px; background:var(--primary); color:#fff; padding:10px 16px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.18); transform:translateY(12px); opacity:0; transition:all .26s; z-index:2200 }
+    .toast.show{ opacity:1; transform:none }
+
+    /* debug panel */
+    #debugPanel{ position:fixed; left:12px; bottom:12px; width:320px; max-height:360px; background:rgba(0,0,0,0.8); color:#fff; font-size:12px; border-radius:8px; overflow:auto; z-index:2300; display:none }
+    #debugPanel.open{ display:block }
+
+    /* responsive */
+    @media (max-width:1024px){ .iframe-shell iframe{ height: calc(100vh - var(--header-height) - 16px) } }
+    @media (max-width:768px){
+      nav.sidebar{ position:fixed; left:-280px; top:0; height:100vh; box-shadow: 6px 0 30px rgba(0,0,0,0.28) }
+      nav.sidebar.open{ left:0 }
+      nav.sidebar.collapsed{ width:var(--sidebar-width) } /* on mobile keep labels visible when open */
+      #sidebarToggle{ position:fixed; left:14px; bottom:18px; z-index:2500; }
+      .page-header{ padding-left:16px; padding-right:16px; height:auto; align-items:flex-start }
+      .header-title{ width:100%; font-size:16px }
+      .actions{ position:static; width:100%; gap:8px; margin-top:6px; }
+      .actions button{ flex:1 1 30%; min-width:80px; }
+      .zoom-control{ flex-basis:100%; margin-bottom:6px }
+      .iframe-shell{ margin:6px }
+    }
+    @media (max-width:420px){
+      .header-title { font-size:15px }
+      .actions button{ padding:6px 8px; font-size:13px }
+    }
+  </style>
+</head>
+<body>
+  <nav class="sidebar" id="sidebar" aria-label="Sidebar navigation">
+    <a href="#" data-src="https://1drv.ms/x/c/4ab693cd2bf36664/IQTEtFWrEWF8RbSXLMEH5VnLAe1IqJVkvgbxMy57MnhmBYc?em=2&AllowTyping=True&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True" data-label="Projection PES" tabindex="0">
+      <i class="fa-solid fa-bullseye"></i><span>Projection PES</span>
+    </a>
+    <a href="#" data-src="https://1drv.ms/x/c/4ab693cd2bf36664/IQQPanuavVGLT7XfDwEB7mzuAZ0ssOfkJHGPvPCT4XSd0HY?em=2" data-label="Plan vs Actual" tabindex="0">
+      <i class="fa-solid fa-chart-line"></i><span>Plan vs Actual</span>
+    </a>
+    <a href="#" data-src="https://1drv.ms/x/c/4ab693cd2bf36664/IQTXUbnVeUiqQYtt632wnUnmAVFFpdHv6xKOc1_9VlFoHa8?em=2" data-label="MIS Report" tabindex="0">
+      <i class="fa-solid fa-table"></i><span>MIS Report</span>
+    </a>
+    <a href="#" data-src="https://1drv.ms/x/c/4ab693cd2bf36664/IQQGLpFCgYZ0Rr9LyycEnL6-AWQ6CbO6xj2g_3BICdvAUlU?em=2&AllowTyping=True&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True" data-label="Jit Call Performance" tabindex="0">
+      <i class="fa-solid fa-tools"></i><span>Jit Call Performance</span>
+    </a>
+    <a href="#" data-src="https://7ravichandran96.github.io/ElkayemSupplyingParts/" data-label="Elkayem Parts" tabindex="0">
+      <i class="fa-solid fa-cogs"></i><span>Elkayem Parts</span>
+    </a>
+
+    <button id="sidebarToggle" aria-label="Toggle sidebar" aria-pressed="false" title="Toggle sidebar">
+      <i class="fas fa-chevron-left" aria-hidden="true"></i>
+    </button>
+  </nav>
+
+  <div class="main-content" id="mainContent">
+    <header class="page-header" role="banner">
+      <div class="header-title" id="headerTitle">
+        <span id="titleText">Elkayem Dashboard</span>
+      </div>
+
+      <div class="actions" role="region" aria-label="Dashboard actions">
+        <div class="zoom-control" title="Zoom / scale">
+          <span id="zoomPct" class="zoom-label">Auto</span>
+          <input id="zoomSlider" type="range" min="40" max="150" step="1" value="100" aria-label="Zoom slider" />
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px">
+            <input id="autoScaleCheckbox" type="checkbox" checked /> Auto
+          </label>
+        </div>
+
+        <button id="refreshBtn" aria-label="Refresh Dashboard">Refresh</button>
+        <button id="darkToggle" aria-label="Toggle dark mode">Dark</button>
+        <button id="debugToggle" aria-label="Toggle debug panel">Logs</button>
+      </div>
+    </header>
+
+    <section class="iframe-container" aria-live="polite" aria-busy="false" id="iframeContainer">
+      <div id="loading" class="loading-spinner" aria-hidden="true">Loading...</div>
+
+      <div class="iframe-viewport" id="iframeViewport">
+        <div class="iframe-shell" id="iframeShell">
+          <!-- iframes inserted here -->
+          <!-- resizer handle -->
+          <div class="resize-handle" id="resizeHandle" title="Drag to resize (double-click to auto)"></div>
+        </div>
+
+        <!-- iframe control buttons (zoom) -->
+        <div class="iframe-controls" id="iframeControls" aria-hidden="false">
+          <button id="zoomInBtn" title="Zoom In">+</button>
+          <button id="zoomOutBtn" title="Zoom Out">−</button>
+          <button id="zoomResetBtn" title="Reset Zoom">⟳</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div id="debugPanel" aria-hidden="true">
+    <div style="padding:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06);">
+      <strong>Debug</strong>
+      <div>
+        <button id="debugClear" style="margin-right:8px">Clear</button>
+        <button id="debugClose">Close</button>
+      </div>
+    </div>
+    <div id="debugBody" style="padding:8px; max-height:300px; overflow:auto; font-size:12px;"></div>
+  </div>
+
+  <script>
+    /****************************************************************
+     * Elements & state (keeps your original variables & prefs)
+     ****************************************************************/
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const links = Array.from(document.querySelectorAll('nav.sidebar a'));
+    const iframeShell = document.getElementById('iframeShell');
+    const iframeViewport = document.getElementById('iframeViewport');
+    const loading = document.getElementById('loading');
+    const titleText = document.getElementById('titleText');
+    const toastEl = document.getElementById('toast');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const darkToggle = document.getElementById('darkToggle');
+    const debugToggle = document.getElementById('debugToggle');
+    const debugPanel = document.getElementById('debugPanel');
+    const debugBody = document.getElementById('debugBody');
+    const debugClear = document.getElementById('debugClear');
+    const debugClose = document.getElementById('debugClose');
+
+    const zoomSlider = document.getElementById('zoomSlider');
+    const autoScaleCheckbox = document.getElementById('autoScaleCheckbox');
+    const zoomPct = document.getElementById('zoomPct');
+    const resizeHandle = document.getElementById('resizeHandle');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+
+    const iframeMap = new Map();         // url -> iframe element
+    const iframeLoadState = new Map();   // url -> boolean loading
+    let currentUrl = '';
+    let manualScale = null;              // null = auto; otherwise scale (0.4 .. 1.5)
+    let lastScale = 1;
+
+    /****************************************************************
+     * Pref helpers (localStorage fallback)
+     ****************************************************************/
+    function setPref(k,v){ try{ localStorage.setItem('ek_'+k, v); }catch(e){ document.cookie = `${k}=${encodeURIComponent(v)}; path=/`; } }
+    function getPref(k){ try{ return localStorage.getItem('ek_'+k); }catch(e){ return document.cookie.split('; ').reduce((r,v)=>{ const parts=v.split('='); return parts[0].trim()===k?decodeURIComponent(parts.slice(1).join('=')):r }, '') } }
+
+    function logDebug(msg){ const ts = new Date().toLocaleTimeString(); const line = `[${ts}] ${msg}`; console.log(line); const d = document.createElement('div'); d.textContent = line; debugBody.prepend(d); }
+
+    /****************************************************************
+     * Toast
+     ****************************************************************/
+    let toastTimer = null;
+    function showToast(msg, ms = undefined){
+      if(ms === undefined) ms = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--toast-duration')) || 2200;
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      if(toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> toastEl.classList.remove('show'), ms);
+      logDebug('TOAST: ' + msg);
+    }
+
+    /****************************************************************
+     * Loading helpers
+     ****************************************************************/
+    function showLoading(){ loading.classList.add('active'); loading.setAttribute('aria-hidden','false'); iframeViewport.setAttribute('aria-busy','true'); }
+    function hideLoading(){ loading.classList.remove('active'); loading.setAttribute('aria-hidden','true'); iframeViewport.setAttribute('aria-busy','false'); }
+
+    /****************************************************************
+     * Scale logic (width-first auto-fit) + manual override
+     ****************************************************************/
+    function scaleViewport(){
+      // auto scale computed from reference width
+      const refW = Number(getComputedStyle(document.documentElement).getPropertyValue('--iframe-ref-w')) || 1280;
+      const vpW = iframeViewport.clientWidth;
+      if(!vpW) return;
+
+      const autoScale = Math.min(vpW / refW, 1.0);
+      const scale = (manualScale && manualScale > 0) ? manualScale : autoScale;
+      lastScale = scale;
+      iframeShell.style.transform = `scale(${scale})`;
+      iframeShell.style.transformOrigin = 'top left';
+
+      // center horizontally
+      const shellWidth = Math.min(refW, vpW) * scale;
+      const leftoverX = Math.max(0, (vpW - shellWidth)/2);
+      iframeShell.style.marginLeft = leftoverX + 'px';
+
+      // update UI label
+      if(manualScale){ zoomPct.textContent = `${Math.round(manualScale*100)}%`; } else { zoomPct.textContent = `Auto (${Math.round(scale*100)}%)`; }
+      logDebug(`scaleViewport -> auto:${Math.round(autoScale*100)}% used:${Math.round(scale*100)}%`);
+    }
+
+    const debounce = (fn, ms)=>{ let t; return (...a)=>{ if(t) clearTimeout(t); t = setTimeout(()=> fn(...a), ms); } };
+    const handleResize = debounce(()=> scaleViewport(), 120);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', ()=> setTimeout(scaleViewport, 220));
+
+    /****************************************************************
+     * Preload (requestIdleCallback)
+     ****************************************************************/
+    function preload(limit = 2){
+      const urls = links.map(l=> (l.dataset.src||'').trim()).filter(Boolean);
+      let i = 0;
+      const loadOne = (u) => {
+        if(!u || iframeMap.has(u)) return;
+        const f = document.createElement('iframe');
+        f.src = u; f.loading = 'lazy'; f.style.display = 'none'; f.referrerPolicy = 'no-referrer-when-downgrade';
+        f.onload = ()=> { iframeLoadState.set(u,false); showToast(`Preloaded: ${getTitle(u)}`,900); logDebug('Preloaded '+u); };
+        f.onerror = ()=> { iframeLoadState.set(u,false); logDebug('Preload failed '+u); };
+        iframeLoadState.set(u,true);
+        iframeMap.set(u,f);
+        iframeShell.appendChild(f);
+      };
+      const schedule = ()=>{
+        while(i < Math.min(limit, urls.length)){
+          const u = urls[i++];
+          if('requestIdleCallback' in window) requestIdleCallback(()=> loadOne(u), {timeout:1500});
+          else setTimeout(()=> loadOne(u), 500 + (i*200));
+        }
+      };
+      schedule();
+    }
+
+    function getTitle(u){ const link = links.find(l=> (l.dataset.src||'').trim()===u); return link ? link.textContent.trim() : u; }
+
+    /****************************************************************
+     * Iframe show/create logic (unchanged behaviour + caching)
+     ****************************************************************/
+    function showIframe(url, label){
+      if(!url) return;
+      url = url.trim();
+
+      if(currentUrl === url){
+        const f = iframeMap.get(url);
+        if(f){ f.style.display='block'; f.classList.add('active'); showToast(`${label} is already active`,1000); logDebug('Show request on already active '+url); }
+        return;
+      }
+
+      // hide previous
+      if(currentUrl && iframeMap.has(currentUrl)){
+        const prev = iframeMap.get(currentUrl); prev.style.display='none'; prev.classList.remove('active');
+      }
+
+      // if exists
+      if(iframeMap.has(url)){
+        const f = iframeMap.get(url);
+        f.style.display = 'block'; f.classList.add('active');
+        currentUrl = url; setPref('lastSheet', url);
+        titleText.textContent = label || getTitle(url) || 'Elkayem Dashboard';
+        hideLoading();
+        scaleViewport();
+        showToast(`Loaded: ${titleText.textContent}`);
+        logDebug('Displayed cached iframe: ' + url);
+        return;
+      }
+
+      // create and load
+      showLoading();
+      iframeLoadState.set(url,true);
+      const f = document.createElement('iframe');
+      f.src = url; f.loading = 'lazy'; f.referrerPolicy = 'no-referrer-when-downgrade'; f.style.display='block'; f.classList.add('active');
+
+      const t0 = performance.now();
+      f.onload = ()=> {
+        iframeLoadState.set(url,false);
+        hideLoading();
+        currentUrl = url; setPref('lastSheet', url);
+        iframeMap.forEach((el,u)=>{ if(u !== url){ el.style.display='none'; el.classList.remove('active') } });
+        f.classList.add('active');
+        titleText.textContent = label || getTitle(url) || 'Elkayem Dashboard';
+        scaleViewport();
+        const took = Math.round(performance.now() - t0);
+        showToast(`Loaded: ${titleText.textContent} (${took}ms)`);
+        logDebug(`Iframe loaded ${url} in ${took}ms`);
+      };
+      f.onerror = (ev)=> {
+        iframeLoadState.set(url,false);
+        hideLoading();
+        f.remove(); iframeMap.delete(url);
+        showToast(`Failed to load: ${label || url}`, 2600);
+        logDebug('Iframe error: ' + url + ' ' + (ev && ev.message ? ev.message : 'error'));
+      };
+
+      iframeMap.set(url, f);
+      iframeShell.appendChild(f);
+
+      // fail-safe timeout
+      setTimeout(()=>{ if(iframeLoadState.get(url)){ iframeLoadState.set(url,false); hideLoading(); showToast('Load timeout',2000); logDebug('Load timeout '+url); } }, 25000);
+    }
+
+    /****************************************************************
+     * Refresh
+     ****************************************************************/
+    function refreshCurrent(){ if(!currentUrl || !iframeMap.has(currentUrl)){ showToast('Nothing to refresh',1200); return; } showLoading(); const f = iframeMap.get(currentUrl); f.src = f.src; f.onload = ()=>{ hideLoading(); scaleViewport(); showToast('Refreshed: ' + getTitle(currentUrl)); logDebug('Refreshed '+currentUrl) }; f.onerror = ()=>{ hideLoading(); showToast('Refresh failed',1200); logDebug('Refresh failed '+currentUrl) }; }
+
+    /****************************************************************
+     * Sidebar behaviour + keyboard
+     ****************************************************************/
+    sidebarToggle.addEventListener('click', ()=>{
+      if(window.innerWidth <= 768){
+        sidebar.classList.toggle('open');
+        const open = sidebar.classList.contains('open');
+        sidebarToggle.setAttribute('aria-pressed', open ? 'true':'false');
+        showToast(open ? 'Menu opened' : 'Menu closed',900);
+        logDebug('sidebar mobile toggle ' + (open?'open':'closed'));
+      } else {
+        sidebar.classList.toggle('collapsed');
+        const collapsed = sidebar.classList.contains('collapsed');
+        sidebarToggle.setAttribute('aria-pressed', collapsed ? 'true':'false');
+        sidebarToggle.querySelector('i')?.classList.toggle('fa-chevron-right', collapsed);
+        sidebarToggle.querySelector('i')?.classList.toggle('fa-chevron-left', !collapsed);
+        setPref('sidebarCollapsed', collapsed ? '1':'0');
+        showToast(collapsed ? 'Sidebar collapsed' : 'Sidebar expanded',900);
+        setTimeout(scaleViewport, 220);
+        logDebug('sidebar desktop toggle ' + (collapsed?'collapsed':'expanded'));
+      }
+    });
+
+    links.forEach(l=>{
+      l.setAttribute('tabindex','0');
+      l.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') { e.preventDefault(); l.click(); } });
+      l.addEventListener('click', e=>{
+        e.preventDefault();
+        links.forEach(x=> x.classList.remove('active'));
+        l.classList.add('active');
+        const url = (l.dataset.src||'').trim();
+        const label = l.textContent.trim();
+        if(!url){ showToast('No source',1200); return; }
+        if(window.innerWidth <= 768) sidebar.classList.remove('open');
+        showIframe(url, label);
+        logDebug('nav click ' + label);
+      });
+    });
+
+    /****************************************************************
+     * Touch swipe gestures (open/close)
+     ****************************************************************/
+    (function(){
+      let startX=0, startY=0, moved=false;
+      document.addEventListener('touchstart', e=>{ if(e.touches && e.touches[0]){ startX=e.touches[0].clientX; startY=e.touches[0].clientY; moved=false; } }, {passive:true});
+      document.addEventListener('touchmove', e=>{ if(!e.touches || !e.touches[0]) return; const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY; if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx)>6) moved=true; }, {passive:true});
+      document.addEventListener('touchend', e=>{ if(!moved) return; const endX=(e.changedTouches && e.changedTouches[0])?e.changedTouches[0].clientX:0; const dx=endX-startX; if(startX<40 && dx>60){ sidebar.classList.add('open'); showToast('Menu opened',900); logDebug('swipe open') } if(dx < -60){ sidebar.classList.remove('open'); showToast('Menu closed',900); logDebug('swipe close') } }, {passive:true});
+    })();
+
+    /****************************************************************
+     * Zoom slider & buttons
+     ****************************************************************/
+    function setManualFromSlider(v){
+      manualScale = Math.max( Number(getComputedStyle(document.documentElement).getPropertyValue('--zoom-min'))/100, Math.min( Number(getComputedStyle(document.documentElement).getPropertyValue('--zoom-max'))/100, v/100 ));
+      setPref('manualScale', manualScale.toString());
+      autoScaleCheckbox.checked = false;
+      zoomPct.textContent = Math.round(manualScale*100) + '%';
+      scaleViewport();
+      logDebug('manual scale set ' + Math.round(manualScale*100) + '%');
+    }
+    zoomSlider.addEventListener('input', e=> setManualFromSlider(Number(e.target.value)));
+    autoScaleCheckbox.addEventListener('change', e=>{
+      if(e.target.checked){ manualScale = null; setPref('manualScale',''); zoomPct.textContent='Auto'; scaleViewport(); logDebug('auto scale enabled') }
+      else setManualFromSlider(Number(zoomSlider.value));
+    });
+
+    zoomInBtn.addEventListener('click', ()=>{
+      const step = 10;
+      const currentPct = manualScale ? Math.round(manualScale*100) : Math.round(lastScale*100);
+      const next = Math.min(Number(getComputedStyle(document.documentElement).getPropertyValue('--zoom-max')) || 150, currentPct + step);
+      setManualFromSlider(next);
+      showToast('Zoom In');
+    });
+    zoomOutBtn.addEventListener('click', ()=>{
+      const step = 10;
+      const currentPct = manualScale ? Math.round(manualScale*100) : Math.round(lastScale*100);
+      const next = Math.max(Number(getComputedStyle(document.documentElement).getPropertyValue('--zoom-min')) || 40, currentPct - step);
+      setManualFromSlider(next);
+      showToast('Zoom Out');
+    });
+    zoomResetBtn.addEventListener('click', ()=>{
+      manualScale = null;
+      autoScaleCheckbox.checked = true;
+      setPref('manualScale','');
+      scaleViewport();
+      zoomSlider.value = 100;
+      zoomPct.textContent = 'Auto';
+      showToast('Zoom Reset (Auto)');
+      logDebug('zoom reset to auto');
+    });
+
+    /****************************************************************
+     * Resizer: mouse & touch dragging to resize iframe-shell
+     * - When user drags, we switch to manualScale based on new width
+     * - Double-click handle resets to auto
+     ****************************************************************/
+    (function(){
+      let dragging = false;
+      let startX=0, startY=0;
+      let startW=0, startH=0;
+
+      function clampManualScaleFromWidth(newWidth){
+        const refW = Number(getComputedStyle(document.documentElement).getPropertyValue('--iframe-ref-w')) || 1280;
+        // convert newWidth (px) to scale ratio relative to refW.
+        const vpW = iframeViewport.clientWidth || window.innerWidth;
+        // compute effective content width before scale: we map shell width to scale
+        const scale = Math.max( Number(getComputedStyle(document.documentElement).getPropertyValue('--zoom-min'))/100, Math.min(Number(getComputedStyle(document.documentElement).getPropertyValue('--zoom-max'))/100, newWidth / refW ));
+        manualScale = scale;
+        setPref('manualScale', manualScale.toString());
+        zoomSlider.value = Math.round(manualScale*100);
+        autoScaleCheckbox.checked = false;
+        zoomPct.textContent = Math.round(manualScale*100) + '%';
+        scaleViewport();
+        logDebug('resizer set manualScale to ' + Math.round(manualScale*100) + '%');
+      }
+
+      function onStart(clientX, clientY){
+        dragging = true;
+        startX = clientX; startY = clientY;
+        // measure current shell width/height in CSS pixels BEFORE transform
+        // We need to compute actual unscaled width; since we use transform: scale, compute baseWidth = offsetWidth / scale
+        const computed = window.getComputedStyle(iframeShell);
+        const transform = computed.transform;
+        let currentScale = lastScale || 1;
+        // try parse matrix if present
+        if(transform && transform !== 'none'){
+          const m = transform.match(/matrix\(([^)]+)\)/);
+          if(m){
+            const values = m[1].split(',').map(s=>parseFloat(s.trim()));
+            if(values.length >= 1 && !isNaN(values[0])) currentScale = values[0];
+          }
+        }
+        startW = iframeShell.getBoundingClientRect().width / currentScale;
+        startH = iframeShell.getBoundingClientRect().height / currentScale;
+      }
+
+      function onMove(clientX, clientY){
+        if(!dragging) return;
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        // new width/height in unscaled px
+        const newW = Math.max(320, startW + dx);
+        const newH = Math.max(240, startH + dy);
+        // set shell's CSS width/height to newW/newH (so content adjusts)
+        iframeShell.style.width = newW + 'px';
+        iframeShell.style.height = newH + 'px';
+        // convert width to manual scale relative to ref width
+        clampManualScaleFromWidth(newW);
+      }
+
+      function onEnd(){
+        if(!dragging) return;
+        dragging = false;
+        logDebug('resizer drag ended; manualScale=' + manualScale);
+      }
+
+      // mouse events
+      resizeHandle.addEventListener('mousedown', (ev)=>{
+        ev.preventDefault();
+        onStart(ev.clientX, ev.clientY);
+        function mm(e){ onMove(e.clientX, e.clientY); }
+        function mu(){ onEnd(); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); }
+        document.addEventListener('mousemove', mm);
+        document.addEventListener('mouseup', mu);
+      });
+
+      // touch events
+      resizeHandle.addEventListener('touchstart', (ev)=>{
+        if(!ev.touches || !ev.touches[0]) return;
+        ev.preventDefault();
+        const t = ev.touches[0];
+        onStart(t.clientX, t.clientY);
+        function tm(e){ if(!e.touches || !e.touches[0]) return; const tt = e.touches[0]; onMove(tt.clientX, tt.clientY); }
+        function te(){ onEnd(); document.removeEventListener('touchmove', tm); document.removeEventListener('touchend', te); }
+        document.addEventListener('touchmove', tm, {passive:false});
+        document.addEventListener('touchend', te);
+      }, {passive:false});
+
+      // double-click resets to auto
+      resizeHandle.addEventListener('dblclick', ()=>{
+        manualScale = null;
+        setPref('manualScale','');
+        iframeShell.style.width = ''; iframeShell.style.height = '';
+        zoomSlider.value = 100; autoScaleCheckbox.checked = true; zoomPct.textContent='Auto';
+        scaleViewport();
+        showToast('Reset to Auto scale');
+      });
+    })();
+
+    /****************************************************************
+     * Keyboard shortcuts (global)
+     * + / -  => zoom in/out
+     * 0 => reset zoom
+     * Ctrl+0 => reset layout (sidebar + scale)
+     ****************************************************************/
+    window.addEventListener('keydown', (e)=>{
+      const tag = document.activeElement && document.activeElement.tagName.toLowerCase();
+      if(tag === 'input' || tag === 'textarea') return; // ignore while typing
+      if(e.key === '+' || e.key === '='){ e.preventDefault(); zoomInBtn.click(); }
+      if(e.key === '-' || e.key === '_'){ e.preventDefault(); zoomOutBtn.click(); }
+      if(e.key === '0'){ if(e.ctrlKey){ // reset layout
+        sidebar.classList.remove('collapsed'); sidebar.classList.remove('open'); manualScale = null; setPref('manualScale',''); setPref('sidebarCollapsed','0'); iframeShell.style.width=''; iframeShell.style.height=''; zoomSlider.value=100; autoScaleCheckbox.checked=true; scaleViewport(); showToast('Layout reset'); logDebug('layout reset via Ctrl+0');
+      } else { zoomResetBtn.click(); } }
+    });
+
+    /****************************************************************
+     * Actions (refresh, dark mode, debug panel)
+     ****************************************************************/
+    refreshBtn.addEventListener('click', ()=> { if(!currentUrl){ showToast('Nothing to refresh'); return; } const f = iframeMap.get(currentUrl); if(!f) return; showLoading(); f.src = f.src; f.onload = ()=>{ hideLoading(); scaleViewport(); showToast('Refreshed'); logDebug('refreshed ' + currentUrl); }; f.onerror = ()=>{ hideLoading(); showToast('Refresh failed'); logDebug('refresh failed ' + currentUrl); } });
+    darkToggle.addEventListener('click', ()=> { document.body.classList.toggle('dark-mode'); const dm = document.body.classList.contains('dark-mode') ? '1':'0'; setPref('darkMode', dm); showToast(document.body.classList.contains('dark-mode') ? 'Dark mode' : 'Light mode'); logDebug('dark mode ' + dm); });
+
+    debugToggle.addEventListener('click', ()=> { debugPanel.classList.toggle('open'); debugPanel.setAttribute('aria-hidden', !debugPanel.classList.contains('open')); });
+    debugClear.addEventListener('click', ()=> { debugBody.innerHTML=''; });
+    debugClose.addEventListener('click', ()=> { debugPanel.classList.remove('open'); debugPanel.setAttribute('aria-hidden','true'); });
+
+    /****************************************************************
+     * Init / restore state
+     ****************************************************************/
+    function init(){
+      // restore dark mode
+      if(getPref('darkMode') === '1') document.body.classList.add('dark-mode');
+
+      // restore sidebar collapsed on wide screens
+      if(getPref('sidebarCollapsed') === '1' && window.innerWidth > 768){
+        sidebar.classList.add('collapsed');
+        sidebarToggle.querySelector('i')?.classList.add('fa-chevron-right');
+        sidebarToggle.setAttribute('aria-pressed','true');
+      }
+
+      // restore manualScale preference
+      const ms = getPref('manualScale');
+      if(ms){
+        manualScale = Number(ms) || null;
+        if(manualScale){
+          zoomSlider.value = Math.round(manualScale*100);
+          autoScaleCheckbox.checked = false;
+          zoomPct.textContent = Math.round(manualScale*100) + '%';
+        }
+      }
+
+      // preload
+      preload(2);
+
+      // initial load (last or first)
+      const last = getPref('lastSheet');
+      let initial = links.find(l=> (l.dataset.src||'').trim() === last) || links[0];
+      if(initial){ links.forEach(l=> l.classList.remove('active')); initial.classList.add('active'); showIframe((initial.dataset.src||'').trim(), initial.textContent.trim()); }
+
+      // small delay scale
+      setTimeout(scaleViewport, 300);
+      logDebug('init completed');
+    }
+
+    // nav link handlers (defined earlier in code flow but ensure ready)
+    // already assigned above when iterating links earlier (preserved)
+
+    // observe iframeShell changes to rescale
+    const observer = new MutationObserver(debounce(()=> scaleViewport(), 120));
+    observer.observe(iframeShell, { childList:true, subtree:true, attributes:false });
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
