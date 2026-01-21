@@ -311,29 +311,35 @@
   </div>
 
   <script>
-    // --- 3.1. CONFIGURATION (Externalized from HTML) ---
+   
+   // --- 3.1. CONFIGURATION (Externalized from HTML) ---
     const DASHBOARD_CONFIG = [
-      // Excel/OneDrive links often require allow-same-origin and allow-scripts for functionality
-      // UPDATED: Added &wdenablegridlines=False for professional reports and removed &wdInConfigurator=True to minimize UI clutter.
-     { 
+      { 
         id: 'six-years', label: 'Six Years',icon: 'calendar-alt',
-        // UPDATED URL BELOW
         url: 'https://1drv.ms/x/c/468679d4cdf834af/IQRbLRTxiaelQpasWOl9FT1AAUQgww0W2oJtk91grCx4FA0?em=2&AllowTyping=True&ActiveCell=\'TVSM\'!F12&wdHideGridlines=True&wdHideHeaders=True&wdInConfigurator=True' 
       },
-      { id: 'proj-pes', label: 'Projection PES', icon: 'bullseye',
-       url: 'https://1drv.ms/x/c/468679d4cdf834af/IQTc7pStVNj6R4gWL8-rgTG1AWnIrOAjCEpcXav8wmVf6Tk?em=2&AllowTyping=True&ActiveCell=\'SUM(V)\'!C3&wdenablegridlines=False' },
-      { id: 'plan-actual', label: 'Plan vs Actual', icon: 'chart-line', 
-      url: 'https://1drv.ms/x/c/468679d4cdf834af/IQRh64wtQXqRTZI8GV4iHS8DAeh6c0mtWC4h9a-CAlhQgJQ?em=2&AllowTyping=True&ActiveCell=\'Print%20Sum\'!D26&wdenablegridlines=False' },
-      { id: 'mis-report', label: 'MIS Report', icon: 'table', 
-      url: 'https://1drv.ms/x/c/468679d4cdf834af/IQTHRO0Qsx2hTI2ZRkGHKJeZAZJp8HXMQyh7p0wgucGxOLA?em=2&AllowTyping=True&ActiveCell=\'MIS\'!X21&wdenablegridlines=False' },
-      { id: 'jit-call', label: 'Jit Call Performance', icon: 'tools', 
-      url: 'https://1drv.ms/x/c/468679d4cdf834af/IQSNZZ46TxqgSorM-BcNSAMYAdyeRYhRbzJMd4juqqrCYYk?em=2&AllowTyping=True&ActiveCell=\'25-26%20Analysis\'!G37&wdenablegridlines=False' },
-      
-      // External websites (less restrictive sandbox)
+{ 
+        id: 'proj-pes', 
+        label: 'Projection PES',  
+        icon: 'bullseye',
+        // REFRAMED: Using your latest iframe source and ensuring valid JavaScript syntax
+        url: "https://1drv.ms/x/c/468679d4cdf834af/IQTdrEGtuCyGTpq-v3Q6hsKuAYKGmjsuTKebugPDxc4FXRw?em=2&AllowTyping=True&ActiveCell='SUM(V)'!I21&wdHideGridlines=True&wdHideHeaders=True&wdInConfigurator=True"
+      },
+      { 
+        id: 'plan-actual', label: 'Plan vs Actual', icon: 'chart-line', 
+        url: 'https://1drv.ms/x/c/468679d4cdf834af/IQRh64wtQXqRTZI8GV4iHS8DAeh6c0mtWC4h9a-CAlhQgJQ?em=2&AllowTyping=True&ActiveCell=\'Print%20Sum\'!D11&wdenablegridlines=False' 
+      },
+      { 
+        id: 'mis-report', label: 'MIS Report', icon: 'table', 
+        url: 'https://1drv.ms/x/c/468679d4cdf834af/IQTHRO0Qsx2hTI2ZRkGHKJeZAZJp8HXMQyh7p0wgucGxOLA?em=2&AllowTyping=True&ActiveCell=\'MIS\'!&wdenablegridlines=False' 
+      },
+      { 
+        id: 'jit-call', label: 'Jit Call Performance', icon: 'tools', 
+        url: 'https://1drv.ms/x/c/468679d4cdf834af/IQSNZZ46TxqgSorM-BcNSAMYAdyeRYhRbzJMd4juqqrCYYk?em=2&AllowTyping=True&ActiveCell=\'25-26%20Analysis\'!G37&wdenablegridlines=False' 
+      },
       { id: 'elkayem-parts', label: 'Elkayem Parts', icon: 'cogs', url: 'https://elkayemsales.github.io/ElkayemSupplyingParts/' },
       { id: 'sales-rr', label: 'Sales R&R', icon: 'briefcase', url: 'https://elkayemsales.github.io/Sales-Roles-Responsibilities/' },
     ];
-
     // --- 3.2. UTILITY FUNCTIONS ---
 
     /**
